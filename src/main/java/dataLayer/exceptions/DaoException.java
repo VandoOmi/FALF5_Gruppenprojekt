@@ -1,7 +1,7 @@
 package dataLayer.exceptions;
 
-public class DaoExceptions extends RuntimeException {
-  public DaoExceptions(String message) {
-    super(message);
-  }
+public class DaoException extends RuntimeException {
+    public DaoException(String message) {
+        super(message);
+    }
 }
