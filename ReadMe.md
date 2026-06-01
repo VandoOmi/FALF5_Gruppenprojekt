@@ -8,6 +8,6 @@ constanten in CAPSLOG
 
 keine sonderzeichen in namen
 
-ALLES in englsich -> keine ä,ö,ü
+ALLES in englsich das nicht in dem UML vorgegeben ist -> keine ä,ö,ü
 
 nur sinnfolle kommentare
