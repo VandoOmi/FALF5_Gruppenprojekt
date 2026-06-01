@@ -38,4 +38,9 @@ jobs:
         run: mvn -B -ntp -DskipTests compile
 
       - name: Scan dependencies for vulnerabilities
-        run: mvn -B -ntp org.owasp:dependency-check-maven:check -DfailBuildOnCVSS=7
+        if: ${{ secrets.NVD_API_KEY != '' }}
+        run: mvn -B -ntp org.owasp:dependency-check-maven:check -DfailBuildOnCVSS=7 -DnvdApiKey=${{ secrets.NVD_API_KEY }}
+
+      - name: Skip vulnerability scan (missing NVD key)
+        if: ${{ secrets.NVD_API_KEY == '' }}
+        run: echo "::warning::NVD_API_KEY is not configured. Skipping dependency vulnerability scan to avoid very long CI runs."
