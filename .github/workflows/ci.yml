@@ -19,6 +19,8 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
 
     steps:
       - name: Checkout repository
@@ -38,9 +40,9 @@ jobs:
         run: mvn -B -ntp -DskipTests compile
 
       - name: Scan dependencies for vulnerabilities
-        if: ${{ secrets.NVD_API_KEY != '' }}
-        run: mvn -B -ntp org.owasp:dependency-check-maven:check -DfailBuildOnCVSS=7 -DnvdApiKey=${{ secrets.NVD_API_KEY }}
+        if: ${{ env.NVD_API_KEY != '' }}
+        run: mvn -B -ntp org.owasp:dependency-check-maven:check -DfailBuildOnCVSS=7 -DnvdApiKey=${{ env.NVD_API_KEY }}
 
       - name: Skip vulnerability scan (missing NVD key)
-        if: ${{ secrets.NVD_API_KEY == '' }}
+        if: ${{ env.NVD_API_KEY == '' }}
         run: echo "::warning::NVD_API_KEY is not configured. Skipping dependency vulnerability scan to avoid very long CI runs."
