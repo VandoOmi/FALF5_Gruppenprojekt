@@ -1,4 +1,4 @@
-package dataLayer.file.daos;
+package dataLayer.dataAccessObjects.db.file.daos;
 
 public class LeistungDaoSqlite {
 }

@@ -1,4 +1,4 @@
-package dataLayer.db.daos;
+package dataLayer.dataAccessObjects.db.daos;
 
 public class LeistungDaoFile {
 }
