@@ -1,0 +1,4 @@
+package dataLayer.dataAccessObjects.file.daos;
+
+public class PatientDaoFile {
+}

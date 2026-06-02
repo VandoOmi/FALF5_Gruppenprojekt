@@ -1,4 +1,4 @@
-package dataLayer.dataAccessObjects.file.daos;
+package dataLayer.dataAccessObjects.db.daos;
 
 import dataLayer.exceptions.DaoException;
 import models.Leistung;
