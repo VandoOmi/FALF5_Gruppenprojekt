@@ -1,4 +1,4 @@
-package dataLayer.dataAccessObjects.db.file.services;
+package dataLayer.dataAccessObjects.file.services;
 
 public class ConnectionManagerSqlite {
 }
