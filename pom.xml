@@ -15,6 +15,7 @@
         <checkstyle.version>10.21.4</checkstyle.version>
         <maven.checkstyle.plugin.version>3.5.0</maven.checkstyle.plugin.version>
         <dependency.check.version>12.1.0</dependency.check.version>
+        <nvd.api.key></nvd.api.key>
     </properties>
 
     <build>
@@ -30,6 +31,15 @@
                         <version>${checkstyle.version}</version>
                     </dependency>
                 </dependencies>
+                <executions>
+                    <execution>
+                        <id>checkstyle-check</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
                 <configuration>
                     <configLocation>${project.basedir}/checkstyle.xml</configLocation>
                     <encoding>${project.build.sourceEncoding}</encoding>
@@ -42,6 +52,18 @@
                 <groupId>org.owasp</groupId>
                 <artifactId>dependency-check-maven</artifactId>
                 <version>${dependency.check.version}</version>
+                <configuration>
+                    <nvdApiKey>${nvd.api.key}</nvdApiKey>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>dependency-check</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
