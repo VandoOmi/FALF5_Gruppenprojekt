@@ -14,7 +14,7 @@ public class DataSources {
     public Map<ModelType, DataSource> createDataSourceMap() {
         HashMap dataSourceMap = new HashMap<ModelType, DataSource>();
         for (DataSource dataSource : dataSourceList) {
-            dataSourceMap.put(dataSource.getModelType(), dataSource);
+            dataSourceMap.put(dataSource.getType(), dataSource);
         }
         return dataSourceMap;
     }

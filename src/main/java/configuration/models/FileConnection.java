@@ -1,6 +1,5 @@
 package configuration.models;
 
-import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,7 +23,7 @@ public class FileConnection {
     public Map<FileType, File> createFileMap() {
         HashMap fileMap = new HashMap<FileType, File>();
         for (File file : fileList) {
-            fileMap.put(file.getFileType(), file);
+            fileMap.put(file.getType(), file);
         }
         return fileMap;
     }

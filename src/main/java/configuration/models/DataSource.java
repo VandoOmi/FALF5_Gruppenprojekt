@@ -21,7 +21,7 @@ public class DataSource {
         this.source = source;
     }
 
-    public ConnectionType getConnectionType() {
+    public ConnectionType getType() {
         return type;
     }
 
