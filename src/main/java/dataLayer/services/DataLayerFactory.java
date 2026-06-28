@@ -3,31 +3,33 @@ package dataLayer.services;
 import javax.sql.DataSource;
 
 import configuration.models.Configuration;
+import configuration.models.FileConnection;
+import configuration.models.ModelType;
 import dataLayer.dataAccessObjects.IDao;
 
 public class DataLayerFactory {
 
-    private Configuration config;
+    private static Configuration config;
 
-    public IDataLayer createDataLayer(Configuration configuration) {
+    public static IDataLayer createDataLayer(Configuration configuration) {
         return null;
     }
 
-    private IDao<T, ID> createDao(ModelType modelType) {
+    private static <T, ID> IDao<T, ID> createDao(ModelType modelType) {
     }
 
-    private IDao<T, ID> createDbDao(ModelType modelType, DataSource dataSource) {
+    private static <T, ID> IDao<T, ID> createDbDao(ModelType modelType, DataSource dataSource) {
     }
 
-    private IDao<T, ID> createFileDao(ModelType modelType, DataSource dataSource) {
+    private static <T, ID> IDao<T, ID> createFileDao(ModelType modelType, DataSource dataSource) {
     }
 
-    private DataSource getDataSource(ModelType modelType) {
+    private static DataSource getDataSource(ModelType modelType) {
     }
 
-    private DbConnection getDbConnection(String dbConnectionType) {
+    private static DbConnection getDbConnection(String dbConnectionType) {
     }
 
-    private FileConnection getFileConnection(ModelType modelType) {
+    private static FileConnection getFileConnection(ModelType modelType) {
     }
 }
