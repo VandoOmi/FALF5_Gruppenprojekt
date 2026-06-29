@@ -11,8 +11,16 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class FilePersistenceServiceXml<T> implements IFilePersistenceService<T> {
+
+    public FilePersistenceServiceXml() {
+    }
+
+    public FilePersistenceServiceXml(XmlWrapper<T> wrapper) {
+        Objects.requireNonNull(wrapper, "wrapper must not be null");
+    }
 
     @Override
     @SuppressWarnings("unchecked")
