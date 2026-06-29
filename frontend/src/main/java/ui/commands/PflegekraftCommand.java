@@ -1,7 +1,7 @@
 package ui.commands;
 
-import dataLayer.dataAccessObjects.db.daos.PflegekraftDaoSqlite;
 import dataLayer.dataAccessObjects.IDao;
+import dataLayer.services.DataLayerManager;
 import models.Pflegekraft;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -23,15 +23,13 @@ import java.util.Optional;
          })
 public class PflegekraftCommand implements Runnable {
 
-    private static final String DB_PATH = "patientenverwaltung.db";
-
     @Override
     public void run() {
         new picocli.CommandLine(this).usage(System.out);
     }
 
     static IDao<Pflegekraft, Long> getDao() {
-        return new PflegekraftDaoSqlite(DB_PATH);
+        return DataLayerManager.getInstance().getDataLayer().getDaoPflegekraft();
     }
 
     @Command(name = "list", description = "Alle Pflegekraefte anzeigen")

@@ -1,7 +1,7 @@
 package ui.commands;
 
-import dataLayer.dataAccessObjects.db.daos.PatientDaoSqlite;
 import dataLayer.dataAccessObjects.IDao;
+import dataLayer.services.DataLayerManager;
 import models.Patient;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -24,15 +24,13 @@ import java.util.Optional;
          })
 public class PatientCommand implements Runnable {
 
-    private static final String DB_PATH = "patientenverwaltung.db";
-
     @Override
     public void run() {
         new picocli.CommandLine(this).usage(System.out);
     }
 
     static IDao<Patient, Long> getDao() {
-        return new PatientDaoSqlite(DB_PATH);
+        return DataLayerManager.getInstance().getDataLayer().getDaoPatient();
     }
 
     @Command(name = "list", description = "Alle Patienten anzeigen")

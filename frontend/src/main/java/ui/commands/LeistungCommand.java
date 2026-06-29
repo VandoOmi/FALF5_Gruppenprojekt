@@ -1,7 +1,7 @@
 package ui.commands;
 
-import dataLayer.dataAccessObjects.db.daos.LeistungDaoSqlite;
 import dataLayer.dataAccessObjects.IDao;
+import dataLayer.services.DataLayerManager;
 import models.Leistung;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -23,15 +23,13 @@ import java.util.Optional;
          })
 public class LeistungCommand implements Runnable {
 
-    private static final String DB_PATH = "patientenverwaltung.db";
-
     @Override
     public void run() {
         new picocli.CommandLine(this).usage(System.out);
     }
 
     static IDao<Leistung, String> getDao() {
-        return new LeistungDaoSqlite(DB_PATH);
+        return DataLayerManager.getInstance().getDataLayer().getDaoLeistung();
     }
 
     @Command(name = "list", description = "Alle Leistungen anzeigen")
