@@ -7,6 +7,12 @@
     <groupId>com.vando</groupId>
     <artifactId>FALF5_Gruppenarbeit</artifactId>
     <version>1.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <modules>
+        <module>backend</module>
+        <module>frontend</module>
+    </modules>
 
     <properties>
         <maven.compiler.source>25</maven.compiler.source>
@@ -54,7 +60,7 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <configLocation>${project.basedir}/checkstyle.xml</configLocation>
+                    <configLocation>${maven.multiModuleProjectDirectory}/checkstyle.xml</configLocation>
                     <encoding>${project.build.sourceEncoding}</encoding>
                     <consoleOutput>true</consoleOutput>
                     <failsOnError>true</failsOnError>

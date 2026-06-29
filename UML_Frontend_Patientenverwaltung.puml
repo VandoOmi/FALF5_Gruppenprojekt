@@ -1,0 +1,390 @@
+@startuml UML_Frontend_Patientenverwaltung
+
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam packageStyle rectangle
+
+title Frontend – Interaktive CLI (Picocli + JLine)\nmit Anbindung an bestehendes Backend
+
+' ============================================================
+' BACKEND (bestehend) - referenzierte Klassen
+' ============================================================
+
+package "models" #LightYellow {
+    class Patient {
+        - id : long
+        - vorname : String
+        - nachname : String
+        - geburtsdatum : LocalDate
+        - pflegegrad : int
+        - zimmer : String
+        - vermoegen : double
+        + Patient(id, vorname, nachname, geburtsdatum, pflegegrad, zimmer, vermoegen)
+        + getter/setter
+    }
+
+    class Pflegekraft {
+        - id : long
+        - vorname : String
+        - nachname : String
+        - telefon : String
+        + Pflegekraft(id, vorname, nachname, telefon)
+        + getter/setter
+    }
+
+    class Leistung {
+        - lkNr : String
+        - bezeichnung : String
+        - beschreibung : String
+        + Leistung(lkNr, bezeichnung, beschreibung)
+        + getter/setter
+    }
+}
+
+package "dataLayer.dataAccessObjects" #LightBlue {
+    interface "IDao<T, ID>" as IDao {
+        + create(entity : T) : void
+        + findById(id : ID) : Optional<T>
+        + findAll() : List<T>
+        + update(entity : T) : void
+        + deleteById(id : ID) : void
+    }
+}
+
+package "dataLayer.dataAccessObjects.db.daos" #LightBlue {
+    abstract class "AbstactDaoSqlite<T, ID>" as AbstactDao {
+        - databaseFilePath : String
+        - tableName : String
+        # ensureTable() : void
+        # {abstract} createTableSql() : String
+        # {abstract} insertSql() : String
+        # {abstract} findByIdSql() : String
+        # {abstract} updateSql() : String
+        # {abstract} deleteByIdSql() : String
+        # {abstract} mapRow(rs : ResultSet) : T
+        # {abstract} bindInsert(ps : PreparedStatement, entity : T) : void
+        # {abstract} bindFindById(ps : PreparedStatement, id : ID) : void
+        # {abstract} bindUpdate(ps : PreparedStatement, entity : T) : void
+        # {abstract} bindDeleteById(ps : PreparedStatement, id : ID) : void
+    }
+
+    class PatientDaoSqlite {
+        + PatientDaoSqlite(databaseFilePath : String)
+    }
+
+    class PflegekraftDaoSqlite {
+        + PflegekraftDaoSqlite(databaseFilePath : String)
+    }
+
+    class LeistungDaoSqlite {
+        + LeistungDaoSqlite(databaseFilePath : String)
+    }
+}
+
+package "dataLayer.dataAccessObjects.db.services" #LightBlue {
+    abstract class ConnectionManager {
+        - className : String
+        - connectionString : String
+        - existingConnection : Connection
+        + getNewConnection() : Connection
+        + getExistingConnection() : Connection
+    }
+
+    class ConnectionManagerSqlite {
+        + ConnectionManagerSqlite(databaseFilePath : String)
+    }
+}
+
+package "dataLayer.services" #LightCyan {
+    interface IDataLayer {
+        + getPatientDao() : IDao<Patient, Long>
+        + getPflegekraftDao() : IDao<Pflegekraft, Long>
+        + getLeistungDao() : IDao<Leistung, String>
+    }
+
+    class DataLayer {
+        - patientDao : IDao<Patient, Long>
+        - pflegekraftDao : IDao<Pflegekraft, Long>
+        - leistungDao : IDao<Leistung, String>
+        + DataLayer(databaseFilePath : String)
+        + getPatientDao() : IDao<Patient, Long>
+        + getPflegekraftDao() : IDao<Pflegekraft, Long>
+        + getLeistungDao() : IDao<Leistung, String>
+    }
+
+    class DataLayerFactory {
+        + {static} create(type : String, path : String) : IDataLayer
+    }
+
+    class DataLayerManager {
+        - {static} instance : IDataLayer
+        + {static} initialize(type : String, path : String) : void
+        + {static} getInstance() : IDataLayer
+    }
+}
+
+' Backend-Vererbung
+AbstactDao ..|> IDao
+PatientDaoSqlite --|> AbstactDao
+PflegekraftDaoSqlite --|> AbstactDao
+LeistungDaoSqlite --|> AbstactDao
+ConnectionManagerSqlite --|> ConnectionManager
+AbstactDao ..> ConnectionManagerSqlite : creates connections
+
+' Service-Schicht Vererbung
+DataLayer ..|> IDataLayer
+DataLayerManager --> IDataLayer : holds instance
+DataLayerManager ..> DataLayerFactory : uses
+DataLayerFactory ..> DataLayer : <<creates>>
+DataLayer ..> PatientDaoSqlite : <<creates>>
+DataLayer ..> PflegekraftDaoSqlite : <<creates>>
+DataLayer ..> LeistungDaoSqlite : <<creates>>
+
+' DAOs nutzen Models
+PatientDaoSqlite ..> Patient : <<creates>>
+PflegekraftDaoSqlite ..> Pflegekraft : <<creates>>
+LeistungDaoSqlite ..> Leistung : <<creates>>
+
+' ============================================================
+' FRONTEND (neu)
+' ============================================================
+
+package "ui" #LightGreen {
+    class Main {
+        - dataLayer : IDataLayer
+        + main(args : String[]) : void
+        - startShell() : void
+        - initializeDataLayer() : void
+    }
+
+    class TableFormatter {
+        + formatPatients(patients : List<Patient>) : String
+        + formatPflegekraefte(pflegekraefte : List<Pflegekraft>) : String
+        + formatLeistungen(leistungen : List<Leistung>) : String
+        - formatRow(values : String[], widths : int[]) : String
+        - formatSeparator(widths : int[]) : String
+    }
+}
+
+package "ui.commands" #LightGreen {
+    class PatientCommand {
+    }
+
+    class "PatientCommand.ListCommand" as PatientList {
+        - dao : IDao<Patient, Long>
+        + run() : void
+    }
+
+    class "PatientCommand.GetCommand" as PatientGet {
+        - dao : IDao<Patient, Long>
+        - id : long
+        + run() : void
+    }
+
+    class "PatientCommand.AddCommand" as PatientAdd {
+        - dao : IDao<Patient, Long>
+        - vorname : String
+        - nachname : String
+        - geburtsdatum : LocalDate
+        - pflegegrad : int
+        - zimmer : String
+        - vermoegen : double
+        + run() : void
+    }
+
+    class "PatientCommand.EditCommand" as PatientEdit {
+        - dao : IDao<Patient, Long>
+        - id : long
+        - vorname : String
+        - nachname : String
+        - geburtsdatum : LocalDate
+        - pflegegrad : int
+        - zimmer : String
+        - vermoegen : double
+        + run() : void
+    }
+
+    class "PatientCommand.DeleteCommand" as PatientDelete {
+        - dao : IDao<Patient, Long>
+        - id : long
+        - force : boolean
+        + run() : void
+    }
+
+    class PflegekraftCommand {
+    }
+
+    class "PflegekraftCommand.ListCommand" as PflegekraftList {
+        - dao : IDao<Pflegekraft, Long>
+        + run() : void
+    }
+
+    class "PflegekraftCommand.GetCommand" as PflegekraftGet {
+        - dao : IDao<Pflegekraft, Long>
+        - id : long
+        + run() : void
+    }
+
+    class "PflegekraftCommand.AddCommand" as PflegekraftAdd {
+        - dao : IDao<Pflegekraft, Long>
+        - vorname : String
+        - nachname : String
+        - telefon : String
+        + run() : void
+    }
+
+    class "PflegekraftCommand.EditCommand" as PflegekraftEdit {
+        - dao : IDao<Pflegekraft, Long>
+        - id : long
+        - vorname : String
+        - nachname : String
+        - telefon : String
+        + run() : void
+    }
+
+    class "PflegekraftCommand.DeleteCommand" as PflegekraftDelete {
+        - dao : IDao<Pflegekraft, Long>
+        - id : long
+        - force : boolean
+        + run() : void
+    }
+
+    class LeistungCommand {
+    }
+
+    class "LeistungCommand.ListCommand" as LeistungList {
+        - dao : IDao<Leistung, String>
+        + run() : void
+    }
+
+    class "LeistungCommand.GetCommand" as LeistungGet {
+        - dao : IDao<Leistung, String>
+        - lkNr : String
+        + run() : void
+    }
+
+    class "LeistungCommand.AddCommand" as LeistungAdd {
+        - dao : IDao<Leistung, String>
+        - lkNr : String
+        - bezeichnung : String
+        - beschreibung : String
+        + run() : void
+    }
+
+    class "LeistungCommand.EditCommand" as LeistungEdit {
+        - dao : IDao<Leistung, String>
+        - lkNr : String
+        - bezeichnung : String
+        - beschreibung : String
+        + run() : void
+    }
+
+    class "LeistungCommand.DeleteCommand" as LeistungDelete {
+        - dao : IDao<Leistung, String>
+        - lkNr : String
+        - force : boolean
+        + run() : void
+    }
+
+    class ExitCommand {
+        + run() : void
+    }
+}
+
+' ============================================================
+' BEZIEHUNGEN
+' ============================================================
+
+' Main nutzt DataLayerManager (NICHT direkt DAOs)
+Main ..> DataLayerManager : initializes + getInstance()
+Main --> IDataLayer : uses
+
+' Main registriert Subcommands
+Main --> PatientCommand : subcommand
+Main --> PflegekraftCommand : subcommand
+Main --> LeistungCommand : subcommand
+Main --> ExitCommand : subcommand
+Main --> TableFormatter : uses
+
+' Nested commands
+PatientCommand --> PatientList : subcommand
+PatientCommand --> PatientGet : subcommand
+PatientCommand --> PatientAdd : subcommand
+PatientCommand --> PatientEdit : subcommand
+PatientCommand --> PatientDelete : subcommand
+
+PflegekraftCommand --> PflegekraftList : subcommand
+PflegekraftCommand --> PflegekraftGet : subcommand
+PflegekraftCommand --> PflegekraftAdd : subcommand
+PflegekraftCommand --> PflegekraftEdit : subcommand
+PflegekraftCommand --> PflegekraftDelete : subcommand
+
+LeistungCommand --> LeistungList : subcommand
+LeistungCommand --> LeistungGet : subcommand
+LeistungCommand --> LeistungAdd : subcommand
+LeistungCommand --> LeistungEdit : subcommand
+LeistungCommand --> LeistungDelete : subcommand
+
+' Commands nutzen IDao-Interface (Dependency Inversion)
+PatientList ..> IDao : uses
+PatientGet ..> IDao : uses
+PatientAdd ..> IDao : uses
+PatientAdd ..> Patient : <<creates>>
+PatientEdit ..> IDao : uses
+PatientDelete ..> IDao : uses
+
+PflegekraftList ..> IDao : uses
+PflegekraftAdd ..> Pflegekraft : <<creates>>
+PflegekraftAdd ..> IDao : uses
+
+LeistungList ..> IDao : uses
+LeistungAdd ..> Leistung : <<creates>>
+LeistungAdd ..> IDao : uses
+
+' TableFormatter liest Models
+TableFormatter ..> Patient : reads
+TableFormatter ..> Pflegekraft : reads
+TableFormatter ..> Leistung : reads
+
+' Implements Runnable
+interface "Runnable" as Runnable {
+    + run() : void
+}
+
+PatientList ..|> Runnable
+PatientGet ..|> Runnable
+PatientAdd ..|> Runnable
+PatientEdit ..|> Runnable
+PatientDelete ..|> Runnable
+PflegekraftList ..|> Runnable
+PflegekraftGet ..|> Runnable
+PflegekraftAdd ..|> Runnable
+PflegekraftEdit ..|> Runnable
+PflegekraftDelete ..|> Runnable
+LeistungList ..|> Runnable
+LeistungGet ..|> Runnable
+LeistungAdd ..|> Runnable
+LeistungEdit ..|> Runnable
+LeistungDelete ..|> Runnable
+ExitCommand ..|> Runnable
+
+' ============================================================
+' LEGENDE
+' ============================================================
+
+legend right
+  |= Farbe |= Bedeutung |
+  |<#LightYellow>| Models (bestehend) |
+  |<#LightBlue>| DataLayer / DAOs (bestehend) |
+  |<#LightCyan>| DataLayer Services (zu implementieren) |
+  |<#LightGreen>| Frontend / UI (neu) |
+  --
+  Konstruktoren der Models
+  muessen auf **public** geaendert werden
+  (aktuell package-private)
+  --
+  UI greift ueber **DataLayerManager**
+  auf DAOs zu (nicht direkt)
+endlegend
+
+@enduml

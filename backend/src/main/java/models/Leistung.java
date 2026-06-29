@@ -6,7 +6,7 @@ public class Leistung {
     private String bezeichnung;
     private String beschreibung;
 
-    Leistung(String lkNr, String bezeichnung, String beschreibung) {
+    public Leistung(String lkNr, String bezeichnung, String beschreibung) {
         this.lkNr = lkNr;
         this.bezeichnung = bezeichnung;
         this.beschreibung = beschreibung;

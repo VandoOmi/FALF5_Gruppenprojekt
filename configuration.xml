@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <connections>
+        <dbConnections>
+            <dbConnectionList>
+                <type>SQLITE</type>
+                <url>patientenverwaltung.db</url>
+            </dbConnectionList>
+        </dbConnections>
+    </connections>
+    <dataSources>
+        <dataSourceList>
+            <model>PATIENT</model>
+            <source>DB</source>
+            <type>SQLITE</type>
+        </dataSourceList>
+        <dataSourceList>
+            <model>PFLEGEKRAFT</model>
+            <source>DB</source>
+            <type>SQLITE</type>
+        </dataSourceList>
+        <dataSourceList>
+            <model>LEISTUNG</model>
+            <source>DB</source>
+            <type>SQLITE</type>
+        </dataSourceList>
+    </dataSources>
+</configuration>

@@ -12,7 +12,7 @@ public class Patient {
     private String zimmer;
     private double vermoegen;
 
-    Patient(long id, String vorname, String nachname, LocalDate geburtsdatum, int pflegegrad, String zimmer, double vermoegen) {
+    public Patient(long id, String vorname, String nachname, LocalDate geburtsdatum, int pflegegrad, String zimmer, double vermoegen) {
         this.id = id;
         this.vorname = vorname;
         this.nachname = nachname;
