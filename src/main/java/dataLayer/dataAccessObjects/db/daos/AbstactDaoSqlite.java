@@ -44,6 +44,11 @@ public abstract class AbstactDaoSqlite<T, ID> implements IDao<T, ID> {
 	protected abstract void bindDeleteById(PreparedStatement statement, ID id) throws SQLException;
 
 	@Override
+	public void create() {
+		ensureTable();
+	}
+
+	@Override
 	public void create(T entity) {
 		try (Connection connection = openConnection();
 			 PreparedStatement statement = connection.prepareStatement(insertSql())) {

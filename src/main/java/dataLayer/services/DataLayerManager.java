@@ -3,7 +3,7 @@ package dataLayer.services;
 import configuration.models.ModelType;
 import configuration.models.DataSource;
 import configuration.models.Configuration;
-import configuration.service.ConnfigurationPersistenceService;
+import configuration.service.ConfigurationPersistenceService;
 
 public class DataLayerManager {
 
@@ -18,7 +18,7 @@ public class DataLayerManager {
 
     public static synchronized DataLayerManager getInstance() {
         if (instance == null) {
-            ConnfigurationPersistenceService cps = ConfigurationPersistenceService.getInstance();
+            ConfigurationPersistenceService cps = ConfigurationPersistenceService.getInstance();
             instance = new DataLayerManager(cps.getConfiguration());
         }
         return instance;
