@@ -1,4 +1,6 @@
 package configuration.models;
+import jakarta.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBContext;
 
 public class Configuration {
     private Connections connections;

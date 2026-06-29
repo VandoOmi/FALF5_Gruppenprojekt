@@ -1,6 +1,6 @@
 package configuration.exception;
 
-public class ConfigurationException extends RuntimeException {
+public class ConfigurationException extends Exception {
     public ConfigurationException(String message) {
         super(message);
     }
