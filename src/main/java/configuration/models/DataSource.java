@@ -1,5 +1,9 @@
 package configuration.models;
 
+import jakarta.xml.bind.annotation.XmlAccessType;
+import jakarta.xml.bind.annotation.XmlAccessorType;
+
+@XmlAccessorType(XmlAccessType.FIELD)
 public class DataSource {
     private ModelType model;
     private SourceType source;

@@ -1,5 +1,11 @@
 package configuration.models;
 
+import jakarta.xml.bind.annotation.XmlAccessType;
+import jakarta.xml.bind.annotation.XmlAccessorType;
+import jakarta.xml.bind.annotation.XmlRootElement;
+
+@XmlRootElement(name = "configuration")
+@XmlAccessorType(XmlAccessType.FIELD)
 public class Configuration {
     private Connections connections;
     private DataSources dataSources;
