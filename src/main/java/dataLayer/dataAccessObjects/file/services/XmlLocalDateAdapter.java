@@ -1,4 +1,4 @@
-package dataLayer.dataAccessObjects.db.services;
+package dataLayer.dataAccessObjects.file.services;
 
 import jakarta.xml.bind.annotation.adapters.XmlAdapter;
 
