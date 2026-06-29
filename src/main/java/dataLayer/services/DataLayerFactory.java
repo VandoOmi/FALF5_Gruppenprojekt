@@ -1,6 +1,7 @@
 package dataLayer.services;
 
 import configuration.models.DataSource;
+import configuration.models.DataSources;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -17,111 +18,139 @@ import dataLayer.dataAccessObjects.IDao;
 import dataLayer.dataAccessObjects.db.daos.LeistungDaoSqlite;
 import dataLayer.dataAccessObjects.db.daos.PatientDaoSqlite;
 import dataLayer.dataAccessObjects.db.daos.PflegekraftDaoSqlite;
-import dataLayer.dataAccessObjects.db.services.IPersistensService;
+import dataLayer.dataAccessObjects.db.services.ConnectionManager;
+import dataLayer.dataAccessObjects.db.services.ConnectionManagerSqlite;
 import dataLayer.dataAccessObjects.file.daos.LeistungDaoFile;
 import dataLayer.dataAccessObjects.file.daos.PatientDaoFile;
 import dataLayer.dataAccessObjects.file.daos.PflegekraftDaoFile;
+import dataLayer.dataAccessObjects.file.services.FilePersistenceServiceCsv;
+import dataLayer.dataAccessObjects.file.services.FilePersistenceServiceXml;
+import dataLayer.dataAccessObjects.file.services.XmlWrapper;
 import models.Leistung;
 import models.Patient;
 import models.Pflegekraft;
 
 public class DataLayerFactory {
 
-    private Configuration config;
-
-    private DataLayerFactory(Configuration configuration) {
-        this.config = configuration;
+    private DataLayerFactory() {
     }
 
     public static IDataLayer createDataLayer(Configuration configuration) {
-        DataLayerFactory factory = new DataLayerFactory(configuration);
-
-        IDao<Patient, Long> patientDao = factory.createDao(ModelType.PATIENT);
-        IDao<Pflegekraft, Long> pflegekraftDao = factory.createDao(ModelType.PFLEGEKRAFT);
-        IDao<Leistung, String> leistungDao = factory.createDao(ModelType.LEISTUNG);
-
         DataLayer dataLayer = new DataLayer();
-        dataLayer.setDaoPatient(patientDao);
-        dataLayer.setDaoPflegekraft(pflegekraftDao);
-        dataLayer.setDaoLeistung(leistungDao);
+
+        DataSource dsLeistung = getDataSource(configuration, ModelType.LEISTUNG);
+        DataSource dsPatient = getDataSource(configuration, ModelType.PATIENT);
+        DataSource dsPflegekraft = getDataSource(configuration, ModelType.PFLEGEKRAFT);
+
+        dataLayer.setDaoLeistung(createDao(ModelType.LEISTUNG, dsLeistung));
+        dataLayer.setDaoPatient(createDao(ModelType.PATIENT, dsPatient));
+        dataLayer.setDaoPflegekraft(createDao(ModelType.PFLEGEKRAFT, dsPflegekraft));
 
         return dataLayer;
     }
 
-    private <T, ID> IDao<T, ID> createDao(ModelType modelType) {
-        DataSource dataSource = getDataSource(modelType);
-
-        if (dataSource.getSource() == SourceType.FILE) {
-            return createFileDao(modelType, dataSource);
-        } else {
-            return createDbDao(modelType, dataSource);
+    private static <T, ID> IDao<T, ID> createDao(ModelType modelType, DataSource dataSource) {
+        if (dataSource == null) {
+            throw new ConfigurationException("Kein DataSource für ModelType: " + modelType);
         }
-    }
 
-    private <T, ID> IDao<T, ID> createDbDao(ModelType modelType, DataSource dataSource) {
-        DbConnection dbConnection = getDbConnection(dataSource.getType());
-
-        switch (modelType) {
-            case PATIENT:
-                return new PatientDaoSqlite(dbConnection.getUrl());
-            case PFLEGEKRAFT:
-                return new PflegekraftDaoSqlite(dbConnection.getUrl());
-            case LEISTUNG:
-                return new LeistungDaoSqlite(dbConnection.getUrl());
+        switch (dataSource.getSource()) {
+            case DB:
+                return createDbDao(modelType, dataSource);
+            case FILE:
+                return createFileDao(modelType, dataSource);
             default:
-                throw new ConfigurationException("Unbekannter ModelType: " + modelType);
+                throw new ConfigurationException("Unbekannter SourceType: " + dataSource.getSource());
         }
     }
 
-    private <T, ID> IDao<T, ID> createFileDao(ModelType modelType, DataSource dataSource) {
-        FileConnection fileConnection = getFileConnection(dataSource.getType());
-        IPersistensService persistenceService = new FilePersistenceServiceCsv(';');
+    @SuppressWarnings("unchecked")
+    private static <T, ID> IDao<T, ID> createDbDao(ModelType modelType, DataSource dataSource) {
+        ConnectionType ct = dataSource.getType();
+        String connectionString = extractConnectionString(dataSource);
 
-        try {
-            Path filePath = Path.of("meineDatei.txt");
+        ConnectionManager connectionManager = new ConnectionManagerSqlite(connectionString);
 
-            if (!Files.exists(filePath)) {
-                Files.createFile(filePath);
-            }
-
-            System.out.println("Dateipfad: " + filePath.toAbsolutePath());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        switch (modelType) {
-            case PATIENT:
-                return new PatientDaoFile(persistenceService, Patient.class, filePath);
-            case PFLEGEKRAFT:
-                return new PflegekraftDaoFile(persistenceService, Pflegekraft.class, filePath);
-            case LEISTUNG:
-                return new LeistungDaoFile(persistenceService, Leistung.class, filePath);
+        switch (ct) {
+            case SQLITE:
+                switch (modelType) {
+                    case LEISTUNG:
+                        return (IDao<T, ID>) new LeistungDaoSqlite((String) connectionString);
+                    case PATIENT:
+                        return (IDao<T, ID>) new PatientDaoSqlite((String) connectionString);
+                    case PFLEGEKRAFT:
+                        return (IDao<T, ID>) new PflegekraftDaoSqlite((String) connectionString);
+                    default:
+                        throw new ConfigurationException("Unbekannter ModelType für DB: " + modelType);
+                }
             default:
-                throw new ConfigurationException("Unbekannter ModelType: " + modelType);
+                throw new ConfigurationException("Für DB wird nur SQLITE erwartet, bekommen: " + ct);
         }
     }
 
-    private DataSource getDataSource(ModelType modelType) {
-        return config.getDataSources().getDataSourceList().stream()
-                .filter(ds -> ds.getModel() == modelType)
-                .findFirst()
-                .orElseThrow(() -> new ConfigurationException(
-                        "Keine DataSource für ModelType konfiguriert: " + modelType));
+    @SuppressWarnings("unchecked")
+    private static <T, ID> IDao<T, ID> createFileDao(ModelType modelType, DataSource dataSource) {
+        ConnectionType ct = dataSource.getType();
+        String filePathString = extractFilePathString(dataSource);
+        Path filePath = Path.of(filePathString);
+
+        switch (ct) {
+            case CSV:
+                switch (modelType) {
+                    case LEISTUNG:
+                        return (IDao<T, ID>) new LeistungDaoFile(
+                                new FilePersistenceServiceCsv<>(','),
+                                (Class<Leistung>) (Class<?>) Leistung.class,
+                                filePath);
+                    case PATIENT:
+                        return (IDao<T, ID>) new PatientDaoFile(
+                                new FilePersistenceServiceCsv<>(','),
+                                (Class<Patient>) (Class<?>) Patient.class,
+                                filePath);
+                    case PFLEGEKRAFT:
+                        return (IDao<T, ID>) new PflegekraftDaoFile(
+                                new FilePersistenceServiceCsv<>(','),
+                                (Class<Pflegekraft>) (Class<?>) Pflegekraft.class,
+                                filePath);
+                    default:
+                        throw new ConfigurationException("Unbekannter ModelType für FILE CSV: " + modelType);
+                }
+
+            case XML:
+                switch (modelType) {
+                    case LEISTUNG:
+                        return (IDao<T, ID>) new LeistungDaoFile(
+                                new FilePersistenceServiceXml<>(new XmlWrapper<Leistung>()),
+                                (Class<Leistung>) (Class<?>) Leistung.class,
+                                filePath);
+                    case PATIENT:
+                        return (IDao<T, ID>) new PatientDaoFile(
+                                new FilePersistenceServiceXml<>(new XmlWrapper<Patient>()),
+                                (Class<Patient>) (Class<?>) Patient.class,
+                                filePath);
+                    case PFLEGEKRAFT:
+                        return (IDao<T, ID>) new PflegekraftDaoFile(
+                                new FilePersistenceServiceXml<>(new XmlWrapper<Pflegekraft>()),
+                                (Class<Pflegekraft>) (Class<?>) Pflegekraft.class,
+                                filePath);
+                    default:
+                        throw new ConfigurationException("Unbekannter ModelType für FILE XML: " + modelType);
+                }
+
+            default:
+                throw new ConfigurationException("Für File wird nur XML oder CSV erwartet, bekommen: " + ct);
+        }
     }
 
-    private DbConnection getDbConnection(ConnectionType connectionType) {
-        return config.getConnections().getdbConnections()
-                .getDbConnectionList().stream()
-                .findFirst()
-                .orElseThrow(() -> new ConfigurationException(
-                        "Keine DbConnection konfiguriert für: " + connectionType));
+    private static DataSource getDataSource(Configuration config, ModelType modelType) {
+        return config.getDataSources().getDataSourceList().getFirst();
     }
 
-    private FileConnection getFileConnection(ConnectionType connectionType) {
-        return config.getConnections().getFileConnections()
-                .getFileConnectionList().stream()
-                .findFirst()
-                .orElseThrow(() -> new ConfigurationException(
-                        "Keine FileConnection konfiguriert für: " + connectionType));
+    private static String extractConnectionString(DataSource ds) {
+        return ds.getType().name();
+    }
+
+    private static String extractFilePathString(DataSource ds) {
+        return ds.getType().name();
     }
 }
